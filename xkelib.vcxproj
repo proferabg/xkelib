@@ -49,7 +49,7 @@
     <CustomBuildBeforeTargets />
     <OutDir>$(SolutionDir)Build\$(ProjectName)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)Build\$(ProjectName)\$(Configuration)\Intermediate\</IntDir>
-    <OutputFile>$(SolutionDir)libraries\xkelib\$(TargetName)$(TargetExt)</OutputFile>
+    <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release21256.0|Xbox 360'">
     <ClCompile>
