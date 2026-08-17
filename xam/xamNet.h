@@ -1053,8 +1053,10 @@ extern "C" {
 		IN		PCHAR pcszObjectName,
 		IN		PCHAR pcszVersion, 
 		IN		PCHAR pcszReferrer, 
-		IN		PCHAR* ppReserved, 
-		IN		DWORD dwFlags
+		IN		PCHAR* ppReserved,
+		IN      PVOID memory,
+		IN      DWORD memorySize,
+		IN      DWORD flags
 	);
 
 	NTSYSAPI
