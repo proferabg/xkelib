@@ -252,6 +252,130 @@ struct CEnetAddr {
 
 };
 
+typedef enum _XEKEYS_STATUS_FLAGS {
+	// ---------------------------------------------------------------------
+	// XeKeys / fuse / KeyVault initialization
+	// ---------------------------------------------------------------------
+
+	XEKEYS_STATUS_FUSE_STATE_INITIALIZED = 0x00000001,
+	XEKEYS_STATUS_KEYS_INITIALIZED = 0x00000002,
+	XEKEYS_STATUS_FACTORY_RESPONSE_VERIFIED = 0x00000004,
+	XEKEYS_STATUS_MANUFACTURING_MODE = 0x00000008,
+
+	XEKEYS_STATUS_FLASH_KEYVAULT_LOADED = 0x00000010,
+	XEKEYS_STATUS_UNKNOWN_00000020 = 0x00000020,
+	XEKEYS_STATUS_FACTORY_CHALLENGE_READY = 0x00000040,
+	XEKEYS_STATUS_KEYVAULT_COMPLETE = 0x00000080,
+
+	XEKEYS_STATUS_EXTENDED_KEYVAULT_INITIALIZED = 0x00000100,
+
+	// Secondary manufacturing/image-mapping policy state.
+	XEKEYS_STATUS_MANUFACTURING_IMAGE_MAPPING_POLICY = 0x00000200,
+
+	// Checked/dev fixed 0x55... CPU-key fuse state.
+	// Strongly associated with the SuperDev CPU-key configuration.
+	XEKEYS_STATUS_SPECIAL_55_CPU_KEY = 0x00000400,
+
+	XEKEYS_STATUS_DVD_NV_PAGE_VERIFIED = 0x00000800,
+
+	// Set when KeyVault.GameRegion == 0x7FFF.
+	XEKEYS_STATUS_KEYVAULT_GAME_REGION_7FFF = 0x00001000,
+
+	// Checked/dev default policy bit.
+	// Exact original Microsoft enum spelling is still unknown.
+	XEKEYS_STATUS_DEVELOPMENT_POLICY_OVERRIDE = 0x00002000,
+
+	// Checked/dev: allows device authentication enforcement to be bypassed.
+	XEKEYS_STATUS_DEVICE_AUTHENTICATION_BYPASS = 0x00004000,
+
+	// Observed as a security / DVD-auth policy gate.
+	// Exact meaning/name still unresolved.
+	XEKEYS_STATUS_SECURITY_POLICY_GATE = 0x00008000,
+
+	// ---------------------------------------------------------------------
+	// Revocation / security-state flags
+	// ---------------------------------------------------------------------
+
+	XEKEYS_STATUS_REVOCATION_LIST_VERIFIED = 0x00010000,
+
+	// Set as the security-settings load path is entered/processed.
+	XEKEYS_STATUS_SECURITY_SETTINGS_LOAD_ATTEMPTED = 0x00020000,
+
+	// Checked/dev storage policy; permits devkit HDD-related behavior.
+	XEKEYS_STATUS_HARD_DISK_AUTHENTICATION_BYPASS = 0x00040000,
+
+	// Factory/DataCenter-style key 0x4D signature verification state.
+	XEKEYS_STATUS_KEY4D_SIGNATURE_VERIFIED = 0x00080000,
+
+	// SECROM digest matched the expected XCPU/XCPGU 1BL digest.
+	XEKEYS_STATUS_SECROM_DIGEST_VERIFIED = 0x00100000,
+
+	// Protected/update data reflects the current HV UpdateSequence.
+	XEKEYS_STATUS_CURRENT_UPDATE_SEQUENCE_OBSERVED = 0x00200000,
+
+	// Retail-only state when KeyVault.GameRegion == 0.
+	XEKEYS_STATUS_KEYVAULT_GAME_REGION_ZERO = 0x00400000,
+
+	XEKEYS_STATUS_UNKNOWN_00800000 = 0x00800000,
+
+	// ---------------------------------------------------------------------
+	// DVD authentication state
+	// ---------------------------------------------------------------------
+
+	// HvpDvdAuthLoadAndVerifyFcrt path has been attempted.
+	// This does NOT necessarily mean the FCRT passed verification.
+	XEKEYS_STATUS_FCRT_LOAD_ATTEMPTED = 0x01000000,
+
+	// DvdAuthEx / DAE load path has been attempted.
+	XEKEYS_STATUS_DVD_AUTH_EX_LOAD_ATTEMPTED = 0x02000000,
+
+	XEKEYS_STATUS_UNKNOWN_04000000 = 0x04000000,
+	XEKEYS_STATUS_UNKNOWN_08000000 = 0x08000000,
+	XEKEYS_STATUS_UNKNOWN_10000000 = 0x10000000,
+	XEKEYS_STATUS_UNKNOWN_20000000 = 0x20000000,
+	XEKEYS_STATUS_UNKNOWN_40000000 = 0x40000000,
+	XEKEYS_STATUS_UNKNOWN_80000000 = 0x80000000,
+
+} XEKEYS_STATUS_FLAGS;
+
+#define XEKEYS_STATUS_FACTORY_READY \
+    (XEKEYS_STATUS_KEYS_INITIALIZED | \
+     XEKEYS_STATUS_FACTORY_CHALLENGE_READY)
+// 0x00000042
+
+
+#define XEKEYS_STATUS_MANUFACTURING_POLICY \
+    (XEKEYS_STATUS_MANUFACTURING_MODE | \
+     XEKEYS_STATUS_MANUFACTURING_IMAGE_MAPPING_POLICY)
+// 0x00000208
+
+
+#define XEKEYS_STATUS_SUPERDEV_CPU_KEY \
+    (XEKEYS_STATUS_FUSE_STATE_INITIALIZED | \
+     XEKEYS_STATUS_SPECIAL_55_CPU_KEY)
+// 0x00000401
+
+
+#define XEKEYS_STATUS_CHECKED_DEFAULT \
+    (XEKEYS_STATUS_DEVELOPMENT_POLICY_OVERRIDE | \
+     XEKEYS_STATUS_DEVICE_AUTHENTICATION_BYPASS | \
+     XEKEYS_STATUS_HARD_DISK_AUTHENTICATION_BYPASS)
+// 0x00046000
+
+#define XEKEYS_STATUS_RETAIL_BASE \
+    (XEKEYS_STATUS_FUSE_STATE_INITIALIZED           | \
+     XEKEYS_STATUS_KEYS_INITIALIZED                 | \
+     XEKEYS_STATUS_FLASH_KEYVAULT_LOADED            | \
+     XEKEYS_STATUS_FACTORY_CHALLENGE_READY          | \
+     XEKEYS_STATUS_KEYVAULT_COMPLETE                | \
+     XEKEYS_STATUS_EXTENDED_KEYVAULT_INITIALIZED    | \
+     XEKEYS_STATUS_DVD_NV_PAGE_VERIFIED             | \
+     XEKEYS_STATUS_SECURITY_POLICY_GATE             | \
+     XEKEYS_STATUS_SECURITY_SETTINGS_LOAD_ATTEMPTED | \
+     XEKEYS_STATUS_SECROM_DIGEST_VERIFIED           | \
+     XEKEYS_STATUS_CURRENT_UPDATE_SEQUENCE_OBSERVED | \
+     XEKEYS_STATUS_DVD_AUTH_EX_LOAD_ATTEMPTED)
+
 
 #endif
 
