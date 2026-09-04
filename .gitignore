@@ -1,0 +1,34 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build output
+Build/
+**/Build/
+**/Debug/
+**/Release/
+**/Release_LTCG/
+**/Profile/
+**/Profile_FastCap/
+**/CodeAnalysis/
+*.obj
+*.pch
+*.pdb
+*.ilk
+*.exp
+*.tlog
+*.lastbuildstate
+*.unsuccessfulbuild
+*.lib
+**/*.txt
+
+# Packaged artifacts
+*.zip
+*.7z
+
+# Local logs
+*.log
+

@@ -57,6 +57,11 @@ typedef enum {
 } TIMER_TYPE;
 
 typedef enum {
+	NotificationEvent = 0x0,
+	SynchronizationEvent = 0x1,
+} EVENT_TYPE;
+
+typedef enum {
 	Executive = 0x0,
 	DelayExecution = 0x1,
 	Suspended = 0x2,

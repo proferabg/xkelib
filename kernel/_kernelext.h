@@ -20,6 +20,7 @@
 #define OBJ_USR_PATH	"\\??\\"
 
 // common modules
+#define MODULE_XOSC     "xosc9v2.xex"
 #define MODULE_KERNEL	"xboxkrnl.exe"
 #define MODULE_XAM		"xam.xex"
 #define MODULE_SIGNIN	"signin.xex"
@@ -55,8 +56,8 @@
 
 #define FILE_SYNCHRONOUS_IO_ALERT               0x00000010
 #define FILE_SYNCHRONOUS_IO_NONALERT            0x00000020
-#define FILE_NON_DIRECTORY_FILE                 0x00000040
-#define FILE_CREATE_TREE_CONNECTION             0x00000080
+#define FILE_NON_DIRECTORY_FILE                 0x00000040 
+#define FILE_CREATE_TREE_CONNECTION             0x00000080 
 
 #define FILE_COMPLETE_IF_OPLOCKED               0x00000100
 #define FILE_NO_EA_KNOWLEDGE                    0x00000200
@@ -124,6 +125,20 @@
 #define EX_CREATE_FLAG_CORE3			0x08000000 // threads starts on 4th cpu core
 #define EX_CREATE_FLAG_CORE4			0x10000000 // threads starts on 5th cpu core
 #define EX_CREATE_FLAG_CORE5			0x20000000 // threads starts on 6th cpu core
+
+#ifndef PASSIVE_LEVEL
+#define PASSIVE_LEVEL   0
+#define LOW_LEVEL       0
+#define APC_LEVEL       1
+#define DISPATCH_LEVEL  2
+#define CMCI_LEVEL      5
+#define CLOCK_LEVEL     13
+#define IPI_LEVEL       14
+#define DRS_LEVEL       14
+#define POWER_LEVEL     14
+#define PROFILE_LEVEL   15
+#define HIGH_LEVEL      15
+#endif
 
 // Can be used instead of module name to get module address where XexGetModuleHandle() is called
 #define GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS	(PSZ)(-1)
@@ -212,6 +227,15 @@ typedef struct _LZX_DECOMPRESS {
 	LONG CpuType;
 } LZX_DECOMPRESS, *PLZX_DECOMPRESS;
 
+typedef VOID (__fastcall *PHAL_POWER_DOWN_ROUTINE)(VOID);
+typedef struct _HAL_POWER_DOWN_NOTIFICATION {
+	LIST_ENTRY ListEntry;
+	PHAL_POWER_DOWN_ROUTINE NotificationRoutine;
+	LONG Priority;
+} HAL_POWER_DOWN_NOTIFICATION, *PHAL_POWER_DOWN_NOTIFICATION;
+
+typedef BYTE KIRQL;
+
 typedef struct _TIME_FIELDS { 
 	SHORT Year; // 0x0 sz:0x2
 	SHORT Month; // 0x2 sz:0x2
@@ -227,6 +251,18 @@ C_ASSERT(sizeof(TIME_FIELDS) == 0x10);
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+	__forceinline KIRQL KeGetCurrentIrql() {
+		KIRQL irql;
+		__asm { lbz irql, 0x18(r13) }
+		return irql;
+	}
+
+	__forceinline PKTHREAD KeGetCurrentThread() {
+		DWORD thread;
+		__asm { lwz thread, 0x100(r13) }
+		return (PKTHREAD)thread;
+	}
 
 	NTSYSAPI
 	EXPORTNUM(3)
@@ -402,6 +438,15 @@ extern "C" {
 		IN OUT	PVOID pBuffer,
 		IN      DWORD cbBuffer,
 		OUT     BOOL isWrite // true if writing, false if reading
+	);
+
+	NTSYSAPI 
+	EXPORTNUM(38) 
+	VOID 
+	NTAPI 
+	HalRegisterPowerDownNotification(
+		IN      PHAL_POWER_DOWN_NOTIFICATION Notification,
+		IN      BOOLEAN Register
 	);
 
 	NTSYSAPI
@@ -696,6 +741,14 @@ extern "C" {
 	);
 
 	NTSYSAPI
+	EXPORTNUM(85) 
+	NTSTATUS 
+	NTAPI 
+	KeConnectInterrupt(
+		IN      PKINTERRUPT InterruptObject
+	);
+
+	NTSYSAPI
 	EXPORTNUM(86)
 	VOID
 	NTAPI
@@ -753,15 +806,48 @@ extern "C" {
 		IN		KPROCESSOR_MODE Mode,
 		IN		PVOID Context 
 	);
+
+	NTSYSAPI
+	EXPORTNUM(111) 
+	VOID 
+	NTAPI 
+	KeInitializeDpc(
+		OUT     PKDPC Dpc,
+		IN      PKDEFERRED_ROUTINE DeferredRoutine,
+		IN      PVOID DeferredContext OPTIONAL
+	);
 	
 	NTSYSAPI
 	EXPORTNUM(112)
 	VOID
 	NTAPI
 	KeInitializeEvent(
-		IN OUT	PKEVENT Event,
-		IN		DWORD Type,
-		IN		BOOL State
+		IN OUT  PKEVENT Event,
+		IN      EVENT_TYPE Type,
+		IN      BOOL State
+	);
+
+	NTSYSAPI
+	EXPORTNUM(113) 
+	VOID 
+	NTAPI 
+	KeInitializeInterrupt(
+		OUT     PKINTERRUPT InterruptObject,
+		IN      PKSERVICE_ROUTINE ServiceRoutine,
+		IN      PVOID ServiceContext,
+		IN      BYTE Irql,
+		IN      BYTE InterruptMode,
+		IN      BYTE TargetNumber
+	);
+
+	NTSYSAPI 
+	EXPORTNUM(117) 
+	VOID 
+	NTAPI 
+	KeInitializeTimerEx(
+		OUT     PKTIMER Timer,
+		IN      TIMER_TYPE Type,
+		IN      BYTE Unknown
 	);
 
 	NTSYSAPI
@@ -872,6 +958,14 @@ extern "C" {
 		IN OUT	PKDEVICE_QUEUE DeviceQueue
 	);
 	
+	NTSYSAPI 
+	EXPORTNUM(142) 
+	DWORD 
+	NTAPI 
+	KeRemoveQueueDpc(
+		IN      PKDPC Dpc
+	);
+	
 	NTSYSAPI
 	EXPORTNUM(143)
 	VOID
@@ -887,6 +981,12 @@ extern "C" {
 	KeResumeThread(
 		IN		PKTHREAD thread
 	);
+
+	NTSYSAPI 
+	EXPORTNUM(147) 
+	VOID 
+	NTAPI 
+	KeRetireDpcList(VOID);
 
 	NTSYSAPI
 	EXPORTNUM(153)
@@ -913,6 +1013,17 @@ extern "C" {
 		IN 		PKEVENT Event,
 		IN		DWORD Increment,
 		IN		BOOL Wait
+	);
+
+	NTSYSAPI 
+	EXPORTNUM(167) 
+	VOID 
+	NTAPI 
+	KeSetTimerEx(
+		IN OUT  PKTIMER Timer,
+		IN      LARGE_INTEGER DueTime,
+		IN      LONG Period,
+		IN      PKDPC Dpc
 	);
 
 	NTSYSAPI
@@ -1030,6 +1141,15 @@ extern "C" {
 		IN		DWORD type, // 0 (2 for system?)
 		IN		DWORD size, // 1
 		IN		DWORD accessFlags //0x20000004 - gives 1 64k phy alloc
+	);
+
+	NTSYSAPI 
+	EXPORTNUM(189) 
+	VOID 
+	NTAPI 
+	MmFreePhysicalMemory(
+		IN      DWORD Type,
+		IN      DWORD Address
 	);
 
 	NTSYSAPI
@@ -1864,6 +1984,15 @@ extern "C" {
 	);
 
 	NTSYSAPI
+	EXPORTNUM(521) 
+	VOID 
+	NTAPI
+	NicGetStats(
+		IN      DWORD Interface,
+		IN OUT  PVOID Stats
+	);
+
+	NTSYSAPI
 	EXPORTNUM(569)
 	BOOL
 	NTAPI
@@ -2104,28 +2233,17 @@ extern "C" {
 		OUT		PWORD pwBufUsed OPTIONAL
 	);
 
-	// NTSYSAPI
-	// EXPORTNUM(111)
-	// VOID
-	// NTAPI
-	// KeInitializeDpc(
-		// OUT		PKDPC Dpc,
-		// IN		PVOID DeferredRoutine,
-		// IN		PVOID DeferredContext OPTIONAL
-	// );
-
-	// NTSYSAPI
-	// EXPORTNUM(113)
-	// VOID
-	// NTAPI
-	// KeInitializeInterrupt(
-		// OUT		PKINTERRUPT InterruptObject,
-		// IN		PVOID ServiceRoutine,
-		// IN		PVOID ServiceContext,
-		// IN		BYTE Irql,
-		// IN		BYTE InterruptMode,
-		// IN		BYTE bProcTargetNumber // KAFFINITY ProcessorEnableMask
-	// );
+	NTSYSAPI 
+	EXPORTNUM(886) 
+	NTSTATUS 
+	NTAPI 
+	KeCallAndWaitForDpcRoutine(
+		IN      PKDEFERRED_ROUTINE Routine,
+		IN      PVOID Context,
+		IN      DWORD Processor,
+		IN      PVOID SystemArgument1,
+		IN      PVOID SystemArgument2
+	);
 
 	// NTSYSAPI
 	// EXPORTNUM(45)

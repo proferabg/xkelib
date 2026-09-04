@@ -257,6 +257,32 @@ typedef struct _UPNP_DEVICE_DESCRIPTION {
 typedef int (*LP_INTERCEPT_XMIT_FUNC)(PVOID pvCallbackUserData, const BYTE * pbXmitData, DWORD dwCbData); // return 0 on success
 typedef int (*LP_INTERCEPT_RECV_FUNC)(PVOID pvCallbackUserData, const BYTE * pbRecvData, DWORD dwCbData); // return 0 on success
 
+#ifndef HINTERNET
+typedef PVOID HINTERNET;
+typedef HINTERNET* PHINTERNET;
+#endif
+
+#ifndef INTERNET_PORT
+typedef WORD INTERNET_PORT;
+typedef INTERNET_PORT* PINTERNET_PORT;
+#endif
+
+struct CEnetAddr {
+	BYTE _ab[6];
+	__inline BOOL IsEqual(const CEnetAddr& ea) const { return memcmp(_ab, ea._ab, sizeof(_ab)) == 0; }
+	__inline BOOL IsEqual(const BYTE* pb) const { return memcmp(_ab, pb, sizeof(_ab)) == 0; }
+	__inline void SetBroadcast() { *(DWORD*)&_ab[0] = 0xFFFFFFFF; *(WORD*)&_ab[4] = 0xFFFF; }
+	__inline void SetZero() { *(DWORD*)&_ab[0] = 0; *(WORD*)&_ab[4] = 0; }
+	__inline BOOL IsBroadcast() const { return *(DWORD*)&_ab[0] == 0xFFFFFFFF && *(WORD*)&_ab[4] == 0xFFFF; }
+	__inline BOOL IsMulticast() const { return (_ab[0] & 1) != 0; }
+	__inline BOOL IsZero() const { return *(DWORD*)&_ab[0] == 0 && *(WORD*)&_ab[4] == 0; }
+	char* Str() const;
+	char* __fastcall PrintStr(char* Buffer) const {
+		RtlSnprintf(Buffer, 18, "%02X-%02X-%02X-%02X-%02X-%02X", _ab[0], _ab[1], _ab[2], _ab[3], _ab[4], _ab[5]);
+		return Buffer;
+	}
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1225,6 +1251,96 @@ extern "C" {
 		IN		DWORD dwTitleId
 	);
 
+
+	NTSYSAPI 
+	EXPORTNUM(203)
+	HINTERNET 
+	NTAPI 
+	NetDll_XHttpOpen(
+		IN XNCALLER_TYPE xnc, 
+		IN const CHAR *pcszUserAgent,
+		IN DWORD dwAccessType, 
+		IN const CHAR *pcszProxyName,
+		IN const CHAR *pcszProxyBypass, 
+		IN DWORD dwFlags
+	);
+
+	NTSYSAPI 
+	EXPORTNUM(205) 
+	HINTERNET 
+	NTAPI 
+	NetDll_XHttpConnect(
+		IN XNCALLER_TYPE xnc, 
+		IN HINTERNET hConnect,
+		IN PCHAR pcszHost, 
+		IN INTERNET_PORT wPort, 
+		IN DWORD dwFlags
+	);
+
+	NTSYSAPI 
+	EXPORTNUM(208) 
+	HINTERNET 
+	NTAPI 
+	NetDll_XHttpOpenRequestUsingMemory(
+		IN XNCALLER_TYPE xnc, 
+		IN HINTERNET hConnect,
+		IN PCHAR pcszVerb, 
+		IN PCHAR pcszObjectName,
+		IN PCHAR pcszVersion, 
+		IN PCHAR pcszReferrer,
+		IN PCHAR* ppReserved, 
+		IN PVOID pMemory,
+		IN DWORD dwMemorySize, 
+		IN DWORD dwFlags
+	);
+
+	NTSYSAPI 
+	EXPORTNUM(209)
+	HINTERNET 
+	NTAPI 
+	NetDll_XHttpSendRequest(
+		IN XNCALLER_TYPE xnc, 
+		IN HINTERNET hRequest,
+		IN const CHAR* pcszHeaders, 
+		IN DWORD dwHeadersLength,
+		IN const VOID* pOptional, 
+		IN DWORD dsOptionalLength,
+		IN DWORD dsTotalLength, 
+		IN PDWORD pdwContext
+	);
+
+	NTSYSAPI 
+	EXPORTNUM(212) 
+	BOOL 
+	NTAPI 
+	NetDll_XHttpReadData(
+		IN XNCALLER_TYPE xnc, 
+		IN HINTERNET hRequest,
+		OUT PVOID pBuffer, 
+		IN DWORD dwBytesToRead, 
+		OUT PDWORD pdwBytesRead
+	);
+
+	NTSYSAPI 
+	EXPORTNUM(215)
+	BOOL 
+	NTAPI 
+	NetDll_XHttpSetOption(
+		IN XNCALLER_TYPE xnc, 
+		IN HINTERNET hInternet,
+		IN DWORD dwOption, 
+		IN const VOID* pBuffer, 
+		IN DWORD dwBufferLength
+	);
+
+	NTSYSAPI 
+	EXPORTNUM(315) 
+	VOID 
+	NTAPI 
+	XNetLogonGetExtendedStatus(
+		OUT PDWORD pdwStatus, 
+		OUT PDWORD pdwStatusError
+	);
 
 #ifdef __cplusplus
 }

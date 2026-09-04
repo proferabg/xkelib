@@ -91,7 +91,7 @@ typedef VOID (NTAPI *PIO_APC_ROUTINE) (
 	IN PVOID ApcContext,
 	IN PIO_STATUS_BLOCK IoStatusBlock,
 	IN ULONG Reserved
-	);
+);
 
 typedef struct _OBJECT_ATTRIBUTES {
 	HANDLE RootDirectory;
@@ -109,6 +109,35 @@ typedef struct _OBJECT_ATTRIBUTES {
 	(p)->Attributes = attrib;                             \
 	(p)->ObjectName = name;                               \
 }
+
+#ifndef InitializeListHead
+#define InitializeListHead(ListHead) ((ListHead)->Flink = (ListHead)->Blink = (ListHead))
+#define IsListEmpty(ListHead) ((ListHead)->Flink == (ListHead))
+#define RemoveHeadList(ListHead) (ListHead)->Flink; {RemoveEntryList((ListHead)->Flink)}
+#define RemoveTailList(ListHead) (ListHead)->Blink; {RemoveEntryList((ListHead)->Blink)}
+#define RemoveEntryList(Entry) { \
+	PLIST_ENTRY _EX_Blink = (Entry)->Blink; \
+	PLIST_ENTRY _EX_Flink = (Entry)->Flink; \
+	_EX_Blink->Flink = _EX_Flink; \
+	_EX_Flink->Blink = _EX_Blink; \
+}
+#define InsertTailList(ListHead,Entry) { \
+	PLIST_ENTRY _EX_ListHead = (ListHead); \
+	PLIST_ENTRY _EX_Blink = _EX_ListHead->Blink; \
+	(Entry)->Flink = _EX_ListHead; \
+	(Entry)->Blink = _EX_Blink; \
+	_EX_Blink->Flink = (Entry); \
+	_EX_ListHead->Blink = (Entry); \
+}
+#define InsertHeadList(ListHead,Entry) { \
+	PLIST_ENTRY _EX_ListHead = (ListHead); \
+	PLIST_ENTRY _EX_Flink = _EX_ListHead->Flink; \
+	(Entry)->Flink = _EX_Flink; \
+	(Entry)->Blink = _EX_ListHead; \
+	_EX_Flink->Blink = (Entry); \
+	_EX_ListHead->Flink = (Entry); \
+}
+#endif
 
 typedef struct _OBJECT_DIRECTORY_INFORMATION{
 	STRING Name;
